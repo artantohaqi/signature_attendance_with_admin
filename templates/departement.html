@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>Manajemen Departemen</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 p-6">
+    <div class="max-w-md mx-auto bg-white p-6 rounded-lg shadow">
+        <h1 class="text-2xl font-bold mb-4 text-center">Manajemen Departemen</h1>
+        <form id="addDepartmentForm">
+            <label class="block mb-1">Nama Departemen</label>
+            <input type="text" id="departement_name" class="w-full border rounded-lg p-2 mb-4" required>
+            <button type="submit" class="w-full bg-blue-600 text-white p-2 rounded-lg hover:bg-blue-700">Tambah Departemen</button>
+        </form>
+        <div id="msg" class="mt-4 text-center"></div>
+
+        <h2 class="text-xl font-semibold mt-6 mb-2">Daftar Departemen</h2>
+        <div id="departement_list" class="border rounded-lg max-h-60 overflow-y-auto">
+            <table class="w-full">
+                <thead>
+                    <tr class="bg-gray-200">
+                        <th class="p-2">Nama Departemen</th>
+                        <th class="p-2 w-1/4">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for d in departements %}
+                    <tr class="border-b last:border-b-0" id="dept-{{ d[0] }}">
+                        <td class="p-2">{{ d[1] }}</td>
+                        <td class="p-2 text-center space-x-1">
+                            <button onclick="openEditModal({{ d[0] }}, '{{ d[1] }}')" class="bg-yellow-500 text-white px-2 py-0.5 rounded text-xs">Edit</button>
+                            <button onclick="deleteDepartment({{ d[0] }})" class="bg-red-500 text-white px-2 py-0.5 rounded text-xs">Hapus</button>
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="mt-4 text-center">
+            <a href="{{ url_for('routes.admin_panel') }}" class="text-blue-600">Kembali ke Admin Panel</a>
+        </div>
+    </div>
+
+    <div id="editDepartmentModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full">
+        <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+            <h3 class="text-xl font-bold mb-4">Edit Departemen</h3>
+            <form id="editDepartmentForm">
+                <input type="hidden" id="edit-dept-id">
+                <div class="mb-4">
+                    <label for="edit-dept-name" class="block text-gray-700">Nama Departemen:</label>
+                    <input type="text" id="edit-dept-name" name="name" class="w-full border rounded-lg p-2" required>
+                </div>
+                <div class="flex justify-end space-x-2">
+                    <button type="button" onclick="closeEditModal()" class="bg-gray-500 text-white px-4 py-2 rounded-lg">Batal</button>
+                    <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-lg">Simpan</button>
+                </div>
+            </form>
+            <div id="edit-msg" class="mt-2 text-center"></div>
+        </div>
+    </div>
+
+    <script>
+        const addForm = document.getElementById('addDepartmentForm');
+        const addInput = document.getElementById('departement_name');
+        const msgDiv = document.getElementById('msg');
+        
+        const editModal = document.getElementById('editDepartmentModal');
+        const editForm = document.getElementById('editDepartmentForm');
+        const editIdInput = document.getElementById('edit-dept-id');
+        const editNameInput = document.getElementById('edit-dept-name');
+        const editMsgDiv = document.getElementById('edit-msg');
+
+        addForm.onsubmit = async (e) => {
+            e.preventDefault();
+            const departement = addInput.value.trim();
+            msgDiv.textContent = 'Menambahkan...';
+
+            const res = await fetch('{{ url_for("routes.api_add_department") }}', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ departement })
+            });
+            const data = await res.json();
+
+            if (data.ok) {
+                msgDiv.textContent = 'Departemen berhasil ditambahkan!';
+                addInput.value = '';
+                location.reload();
+            } else {
+                msgDiv.textContent = 'Gagal: ' + data.error;
+            }
+        };
+
+        function openEditModal(id, name) {
+            editIdInput.value = id;
+            editNameInput.value = name;
+            editMsgDiv.textContent = '';
+            editModal.classList.remove('hidden');
+        }
+
+        function closeEditModal() {
+            editModal.classList.add('hidden');
+        }
+
+        editForm.onsubmit = async (e) => {
+            e.preventDefault();
+            const id = editIdInput.value;
+            const name = editNameInput.value.trim();
+            editMsgDiv.textContent = 'Menyimpan...';
+
+            const res = await fetch('{{ url_for("routes.api_edit_department") }}', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ id, name })
+            });
+            const data = await res.json();
+            
+            if (data.ok) {
+                editMsgDiv.textContent = 'Departemen berhasil diperbarui!';
+                setTimeout(() => location.reload(), 1000);
+            } else {
+                editMsgDiv.textContent = 'Gagal: ' + data.error;
+            }
+        };
+
+        async function deleteDepartment(id) {
+            if (confirm("Apakah Anda yakin ingin menghapus departemen ini?")) {
+                const res = await fetch(`/api/delete_department/${id}`, {
+                    method: 'DELETE'
+                });
+                const data = await res.json();
+                if (data.ok) {
+                    alert(data.message);
+                    location.reload();
+                } else {
+                    alert('Gagal menghapus departemen: ' + data.error);
+                }
+            }
+        }
+    </script>
+</body>
+</html>

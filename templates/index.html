@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Signature Attendance</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
+</head>
+<body class="bg-slate-50 min-h-screen p-6">
+  {% include 'seebar.html' %}
+  <div class="max-w-4xl mx-auto">
+    <h1 class="text-2xl font-bold mb-4">Absensi Tanda Tangan — DTW (Stroke-based)</h1>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div class="bg-white p-4 rounded shadow">
+        <h2 class="font-semibold mb-2">Registrasi (rekam 3 contoh)</h2>
+        <label>Nama</label>
+        <input id="reg_name" class="w-full p-2 border rounded mb-2" />
+        <label>Email</label>
+        <input id="reg_email" class="w-full p-2 border rounded mb-2" />
+        <label>Departemen</label>
+        <input id="reg_dept" class="w-full p-2 border rounded mb-2" />
+        <label>Tanda Tangan (tekan Capture untuk menyimpan satu contoh)</label>
+        <div class="border rounded mb-2"><canvas id="reg_canvas" width="400" height="200"></canvas></div>
+        <div class="flex gap-2 mb-3">
+          <button id="reg_clear" class="px-3 py-1 bg-gray-200 rounded">Clear</button>
+          <button id="reg_capture" class="px-3 py-1 bg-indigo-600 text-white rounded">Capture Sample</button>
+          <button id="reg_submit" class="px-3 py-1 bg-blue-600 text-white rounded">Submit Registration</button>
+        </div>
+        <div id="reg_info" class="text-sm mb-2">Samples captured: <span id="reg_count">0</span>/3</div>
+        <div id="reg_msg" class="text-sm"></div>
+      </div>
+
+      <div class="bg-white p-4 rounded shadow">
+        <h2 class="font-semibold mb-2">Absensi</h2>
+        <label>Email</label>
+        <input id="att_email" class="w-full p-2 border rounded mb-2" />
+        <label>Tanda Tangan</label>
+        <div class="border rounded mb-2"><canvas id="att_canvas" width="400" height="200"></canvas></div>
+        <div class="flex gap-2 mb-3">
+          <button id="att_clear" class="px-3 py-1 bg-gray-200 rounded">Clear</button>
+          <button id="att_submit" class="px-3 py-1 bg-green-600 text-white rounded">Absen</button>
+        </div>
+        <div id="att_msg" class="text-sm"></div>
+      </div>
+    </div>
+
+    <div class="mt-6 bg-white p-4 rounded shadow">
+      <h3 class="font-semibold mb-2">Daftar Pengguna</h3>
+      <div id="users_list" class="text-sm"></div>
+    </div>
+
+    <div class="mt-6 bg-white p-4 rounded shadow">
+      <h3 class="font-semibold mb-2">Selamat Datang</h3>
+      <a href="/register" class="text-blue-600">Registrasi</a> | <a href="/attendance" class="text-blue-600">Absensi</a>
+    </div>
+  </div>
+
+<script src="/static/main.js"></script>
+</body>
+</html>

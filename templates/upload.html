@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Upload File</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
+</head>
+<body class="bg-slate-50 min-h-screen p-6">
+<div class="max-w-md mx-auto">
+  <div class="bg-white p-6 rounded shadow">
+    <h2 class="font-semibold mb-2 text-lg">Upload File</h2>
+    <form id="uploadForm" autocomplete="off" enctype="multipart/form-data">
+      <!-- Email -->
+      <label class="block mb-1 font-medium">Email</label>
+      <input id="email" type="email" class="w-full p-2 border rounded mb-3" required />
+
+      <!-- File -->
+      <label class="block mb-1 font-medium">File</label>
+      <input id="fileInput" type="file" class="w-full mb-3" multiple required />
+
+      <!-- Signature -->
+      <label class="block mb-1 font-medium">Tanda Tangan</label>
+      <div class="border rounded mb-2 bg-gray-50">
+        <canvas id="sig_canvas" width="400" height="200"></canvas>
+      </div>
+
+      <!-- Buttons -->
+      <div class="flex gap-2 mb-3">
+        <button type="button" id="clear" class="px-3 py-1 bg-gray-200 rounded">Clear</button>
+        <button type="submit" id="submit" class="px-3 py-1 bg-green-600 text-white rounded">Upload</button>
+      </div>
+    </form>
+
+    <!-- Messages -->
+    <div id="msg" class="text-sm mt-3"></div>
+      <div class="mt-4">
+        <a href="/register" class="text-blue-600">Ke Halaman Registrasi</a>
+      </div>
+  </div>
+</div>
+
+<script>
+let signaturePad = new SignaturePad(document.getElementById('sig_canvas'), {
+  backgroundColor: 'rgba(255,255,255,0)'
+});
+const msgDiv = document.getElementById('msg');
+
+document.getElementById('clear').onclick = () => signaturePad.clear();
+
+document.getElementById('uploadForm').onsubmit = async function(e) {
+  e.preventDefault();
+  msgDiv.innerText = "";
+
+  if (signaturePad.isEmpty()) {
+    msgDiv.innerText = "Tanda tangan belum diisi!";
+    return;
+  }
+
+  let email = document.getElementById('email').value.trim();
+  let files = document.getElementById('fileInput').files;
+  if (files.length === 0) {
+    msgDiv.innerText = "Pilih minimal 1 file!";
+    return;
+  }
+
+  let signature = signaturePad.toData();
+
+  let formData = new FormData();
+  formData.append("email", email);
+  formData.append("signature", JSON.stringify(signature));
+  for (let i = 0; i < files.length; i++) {
+    formData.append("files", files[i]);
+  }
+
+  try {
+    let res = await fetch('/api/upload', {
+      method: 'POST',
+      body: formData
+    });
+    let contentType = res.headers.get("content-type") || "";
+    if (!contentType.includes("application/json")) {
+    let text = await res.text();
+    throw new Error("Server returned non-JSON response: " + text.slice(0, 100));
+    }
+
+    let data = await res.json();
+    msgDiv.innerText = data.ok ? "Upload berhasil: " + (data.note || "") : "Gagal: " + (data.error || data.note);
+    if (data.ok) {
+      signaturePad.clear();
+      document.getElementById('uploadForm').reset();
+    }
+  } catch(err) {
+    msgDiv.innerText = "Terjadi error: " + err;
+  }
+};
+</script>
+</body>
+</html>
