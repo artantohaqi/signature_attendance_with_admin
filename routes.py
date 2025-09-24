@@ -7,8 +7,14 @@ from database import get_db
 from signature_utils import preprocess_signature, dtw_distance
 from werkzeug.utils import secure_filename
 import os
-from signature_utils import preprocess_signature, dtw_distance
-import json
+import logging
+
+# Konfigurasi logging
+logging.basicConfig(
+    filename='app.log',
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s'
+)
 
 routes = Blueprint('routes', __name__)
 UPLOAD_FOLDER = os.path.join(os.path.dirname(__file__), 'uploads')
@@ -20,25 +26,26 @@ def upload_page():
 
 @routes.route("/api/upload", methods=["POST"])
 def api_upload():
-    # ambil data
     email = request.form.get("email", "").strip().lower()
-    signature = request.form.get("signature", None)   # JSON string dari frontend
-    files = request.files.getlist("files")            # <-- support multiple files
+    signature = request.form.get("signature", None)
+    files = request.files.getlist("files")
+
+    logging.info(f"[UPLOAD] Request received for email: '{email}'.")
 
     if not email or signature is None or not files:
+        logging.warning("[UPLOAD] Request failed: missing email, signature, or files.")
         return jsonify({"ok": False, "error": "email, signature, and files are required"}), 400
 
     db = get_db()
     cur = db.cursor()
-
-    # --- cek user ---
-    cur.execute("SELECT id, departement_id FROM users WHERE email = ?", (email,))
-    row = cur.fetchone()
     timestamp_dt = datetime.now()
     timestamp = timestamp_dt.isoformat()
 
+    cur.execute("SELECT id, departement_id FROM users WHERE email = ?", (email,))
+    row = cur.fetchone()
+
     if not row:
-        # log gagal
+        logging.error(f"[UPLOAD] Failed for email '{email}': user not registered. Logging to DB.")
         cur.execute("""INSERT INTO uploads
             (user_id, departement_id, email, files, status, note, distance)
             VALUES (?,?,?,?,?,?,?)""",
@@ -47,11 +54,12 @@ def api_upload():
         return jsonify({"ok": False, "error": "user not registered"}), 404
 
     user_id, departement_id = row
+    logging.info(f"[UPLOAD] User '{email}' (ID: {user_id}) found. Proceeding to signature validation.")
 
-    # --- ambil signature referensi ---
     cur.execute("SELECT sig_json FROM signatures WHERE user_id = ?", (user_id,))
     rows = cur.fetchall()
     if not rows:
+        logging.warning(f"[UPLOAD] Failed for user '{email}': no reference signatures found. Logging to DB.")
         cur.execute("""INSERT INTO uploads
             (user_id, departement_id, email, files, status, note, distance)
             VALUES (?,?,?,?,?,?,?)""",
@@ -59,14 +67,13 @@ def api_upload():
         db.commit()
         return jsonify({"ok": False, "error": "no reference signatures"}), 400
 
-    # --- proses signature input ---
     try:
         input_json = json.loads(signature)
         input_pts = preprocess_signature(input_json, n=150)
     except Exception as e:
+        logging.error(f"[UPLOAD] Failed for user '{email}': Invalid signature format. Detail: {str(e)}")
         return jsonify({"ok": False, "error": "invalid signature format", "detail": str(e)}), 400
 
-    # --- bandingkan dengan semua reference signatures ---
     distances = []
     for (sig_json_str,) in rows:
         try:
@@ -75,9 +82,11 @@ def api_upload():
             d = dtw_distance(ref_pts, input_pts)
             distances.append(d)
         except Exception:
+            logging.warning(f"[UPLOAD] Skipping a corrupted reference signature for user '{email}'.")
             continue
 
     if not distances:
+        logging.error(f"[UPLOAD] Failed for user '{email}': Processing error (no valid reference signatures). Logging to DB.")
         cur.execute("""INSERT INTO uploads
             (user_id, departement_id, email, files, status, note, distance)
             VALUES (?,?,?,?,?,?,?)""",
@@ -86,11 +95,11 @@ def api_upload():
         return jsonify({"ok": False, "error": "processing error"}), 500
 
     min_dist = float(min(distances))
-    threshold = 0.10   # sesuai api_attendance; kalau terlalu ketat, sesuaikan
+    threshold = 0.10
 
     if min_dist > threshold:
-        # signature mismatch -> tolak dan log
         attempted_names = [f.filename for f in files]
+        logging.warning(f"[UPLOAD] Rejected for user '{email}': signature mismatch (distance={min_dist:.4f}). Logging to DB.")
         cur.execute("""INSERT INTO uploads
             (user_id, departement_id, email, files, status, note, distance)
             VALUES (?,?,?,?,?,?,?)""",
@@ -99,17 +108,16 @@ def api_upload():
         db.commit()
         return jsonify({"ok": False, "error": "signature mismatch", "distance": min_dist}), 403
 
-    # --- signature cocok: simpan semua file ---
     saved_files = []
     for f in files:
         if f and f.filename:
             filename = secure_filename(f.filename)
             save_path = os.path.join(UPLOAD_FOLDER, filename)
-            # jika ingin menghindari overwrite, bisa tambahkan timestamp/prefix di filename
             f.save(save_path)
             saved_files.append(filename)
+    
+    logging.info(f"[UPLOAD] Files {saved_files} successfully saved for user '{email}'.")
 
-    # simpan record uploads (files disimpan sebagai JSON array)
     cur.execute("""INSERT INTO uploads
         (user_id, departement_id, email, files, status, note, distance)
         VALUES (?,?,?,?,?,?,?)""",
@@ -117,6 +125,7 @@ def api_upload():
          f"signature match (distance={min_dist:.4f})", min_dist))
     db.commit()
 
+    logging.info(f"[UPLOAD] Successful for user '{email}'. Distance: {min_dist:.4f}.")
     return jsonify({
         "ok": True,
         "status": "success",
@@ -128,22 +137,25 @@ def api_upload():
 # --- Error Handlers JSON ---
 @routes.errorhandler(404)
 def not_found(e):
+    logging.warning(f"404 Not Found: {request.path}")
     return jsonify({"ok": False, "error": "not found"}), 404
 
 @routes.errorhandler(405)
 def method_not_allowed(e):
+    logging.warning(f"405 Method Not Allowed: {request.method} on {request.path}")
     return jsonify({"ok": False, "error": "method not allowed"}), 405
 
 @routes.errorhandler(500)
 def server_error(e):
+    logging.critical(f"500 Internal Server Error: {str(e)}", exc_info=True)
     return jsonify({"ok": False, "error": "internal server error", "detail": str(e)}), 500
-
 
 # --- Dekorator untuk admin ---
 def require_admin(fn):
     @wraps(fn)
     def wrapped(*a, **kw):
         if not session.get('admin_id'):
+            logging.warning(f"[ACCESS] Unauthorized access attempt to {request.path}")
             return redirect(url_for('routes.login'))
         return fn(*a, **kw)
     return wrapped
@@ -184,22 +196,25 @@ def api_register():
     data = request.get_json()
     nama_lengkap = data.get("nama_lengkap","").strip()
     email = data.get("email","").strip().lower()
-    departement_id = data.get("departement_id")
     signatures = data.get("signatures", [])
-    if not nama_lengkap or not email or departement_id is None or not signatures or not isinstance(signatures, list):
-        return jsonify({"ok": False, "error": "nama_lengkap, email, departement_id, and signatures[] required (min 1)"}), 400
+    logging.info(f"[REGISTER] Request received for email: '{email}'.")
+    if not nama_lengkap or not email or not signatures or not isinstance(signatures, list):
+        logging.warning("[REGISTER] Failed: missing nama_lengkap, email, or signatures.")
+        return jsonify({"ok": False, "error": "nama_lengkap, email, and signatures[] required (min 1)"}), 400
     db = get_db()
     cur = db.cursor()
     try:
-        cur.execute("INSERT INTO users (nama_lengkap, email, departement_id, created_at) VALUES (?,?,?,?)",
-                    (nama_lengkap, email, departement_id, datetime.utcnow().isoformat()))
+        cur.execute("INSERT INTO users (nama_lengkap, email, created_at) VALUES (?,?,?)",
+                    (nama_lengkap, email, datetime.utcnow().isoformat()))
         user_id = cur.lastrowid
     except sqlite3.IntegrityError:
+        logging.error(f"[REGISTER] Failed for '{email}': email already registered.")
         return jsonify({"ok": False, "error": "email already registered"}), 400
     for sig in signatures:
         cur.execute("INSERT INTO signatures (user_id, sig_json, created_at) VALUES (?,?,?)",
                     (user_id, json.dumps(sig), datetime.utcnow().isoformat()))
     db.commit()
+    logging.info(f"[REGISTER] User '{email}' (ID: {user_id}) registered successfully.")
     return jsonify({"ok": True})
 
 @routes.route("/api/attendance", methods=["POST"])
@@ -208,31 +223,45 @@ def api_attendance():
     email = data.get("email","").strip().lower()
     signature = data.get("signature", None)
     reason = data.get("reason", "").strip()
+
+    logging.info(f"[ATTENDANCE] Request received for email: '{email}'.")
+
     if not email or signature is None:
+        logging.warning("[ATTENDANCE] Request failed: missing email or signature.")
         return jsonify({"ok": False, "error":"email and signature required"}), 400
+
     db = get_db()
     cur = db.cursor()
     cur.execute("SELECT id, nama_lengkap, departement_id FROM users WHERE email = ?", (email,))
     row = cur.fetchone()
     timestamp_dt = datetime.now()
     timestamp = timestamp_dt.isoformat()
+
     if not row:
+        logging.error(f"[ATTENDANCE] Failed for email '{email}': user not registered. Logging to DB.")
         cur.execute("INSERT INTO attendance (user_id,email,timestamp,status,note,distance,reason,departement_id) VALUES (?,?,?,?,?,?,?,?)",
                     (None, email, timestamp, "failed", "user not registered", None, None, None))
         db.commit()
         return jsonify({"ok": False, "error":"user not registered"}), 404
+
     user_id, nama_lengkap, departement_id = row
+    logging.info(f"[ATTENDANCE] User '{email}' (ID: {user_id}) found.")
+
     cur.execute("SELECT sig_json FROM signatures WHERE user_id = ?", (user_id,))
     rows = cur.fetchall()
     if not rows:
+        logging.warning(f"[ATTENDANCE] Failed for user '{email}': no reference signatures. Logging to DB.")
         cur.execute("INSERT INTO attendance (user_id,email,timestamp,status,note,distance,reason,departement_id) VALUES (?,?,?,?,?,?,?,?)",
                     (user_id, email, timestamp, "failed", "no reference signatures", None, None, departement_id))
         db.commit()
         return jsonify({"ok": False, "error":"no reference signatures"}), 400
+
     try:
         input_pts = preprocess_signature(signature, n=150)
     except Exception as e:
+        logging.error(f"[ATTENDANCE] Failed for user '{email}': Invalid signature format. Detail: {str(e)}")
         return jsonify({"ok": False, "error":"invalid signature format", "detail": str(e)}), 400
+    
     distances = []
     for (sig_json_str,) in rows:
         try:
@@ -241,31 +270,45 @@ def api_attendance():
             d = dtw_distance(ref_pts, input_pts)
             distances.append(d)
         except Exception:
+            logging.warning(f"[ATTENDANCE] Skipping a corrupted reference signature for user '{email}'.")
             continue
+            
     if not distances:
+        logging.error(f"[ATTENDANCE] Failed for user '{email}': Processing error (no valid reference signatures). Logging to DB.")
         cur.execute("INSERT INTO attendance (user_id,email,timestamp,status,note,distance,reason,departement_id) VALUES (?,?,?,?,?,?,?,?)",
                     (user_id, email, timestamp, "failed", "processing error", None, None, departement_id))
         db.commit()
         return jsonify({"ok": False, "error":"processing error"}), 500
+
     min_dist = float(min(distances))
     threshold = 0.10
     cutoff = time(7,30,0)
     is_late = timestamp_dt.time() > cutoff
+    
     if is_late and not reason:
+        logging.warning(f"[ATTENDANCE] User '{email}' is late ({timestamp_dt.time().strftime('%H:%M:%S')}) but no reason provided.")
         return jsonify({"ok": False, "need_reason": True, "note": f"late (time {timestamp_dt.time().strftime('%H:%M:%S')})"}), 200
+
     if min_dist <= threshold:
         status = "success"
         note = f"signature match (distance={min_dist:.4f})"
         ok = True
+        logging.info(f"[ATTENDANCE] Successful for user '{email}'. Distance: {min_dist:.4f}.")
+        if is_late:
+            logging.warning(f"[ATTENDANCE] User '{email}' is late ({timestamp_dt.time().strftime('%H:%M:%S')}). Reason: '{reason}'.")
     else:
         status = "failed"
         note = f"signature mismatch (distance={min_dist:.4f})"
         ok = False
+        logging.warning(f"[ATTENDANCE] Failed for user '{email}': signature mismatch (distance={min_dist:.4f}).")
+
     cur.execute("INSERT INTO attendance (user_id,email,timestamp,status,note,distance,reason,departement_id) VALUES (?,?,?,?,?,?,?,?)",
                 (user_id, email, timestamp, status, note, min_dist, reason if is_late else None, departement_id))
     db.commit()
+    
     return jsonify({"ok": ok, "status": status, "note": note, "name": nama_lengkap, "distance": min_dist, "late": is_late})
 
+# --- Tambahan rute lainnya (tanpa logging, untuk singkatnya) ---
 @routes.route("/api/list_users")
 def api_list_users():
     db = get_db()
@@ -486,10 +529,8 @@ def api_update_signatures(user_id):
     cur = db.cursor()
     
     try:
-        # Hapus signatures lama
         cur.execute("DELETE FROM signatures WHERE user_id = ?", (user_id,))
         
-        # Tambah signatures baru
         for sig in signatures:
             cur.execute("INSERT INTO signatures (user_id, sig_json, created_at) VALUES (?, ?, ?)",
                         (user_id, json.dumps(sig), datetime.utcnow().isoformat()))
@@ -520,14 +561,17 @@ def login():
         if row and check_password_hash(row[2], password):
             session['admin_id'] = row[0]
             session['admin_username'] = row[1]
+            logging.info(f"Admin '{username}' logged in successfully.")
             return redirect(url_for("routes.admin_panel"))
         
+        logging.warning(f"Failed login attempt for username: '{username}'.")
         return render_template("login.html", error="Invalid credentials")
     
     return render_template("login.html")
 
 @routes.route("/logout")
 def logout():
+    logging.info(f"Admin '{session.get('admin_username')}' logged out.")
     session.pop('admin_id', None)
     session.pop('admin_username', None)
     return redirect(url_for("routes.login"))

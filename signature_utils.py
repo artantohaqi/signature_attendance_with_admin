@@ -50,7 +50,7 @@ def normalize_points(pts):
         return pts
     mean = pts.mean(axis=0)
     pts = pts - mean
-    max_range = max(pts[:,0].ptp(), pts[:,1].ptp(), 1e-6)
+    max_range = max(np.ptp(pts[:, 0]), np.ptp(pts[:, 1]), 1e-6)
     pts = pts / max_range
     return pts
 

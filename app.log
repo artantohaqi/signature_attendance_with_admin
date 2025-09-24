@@ -1,0 +1,12 @@
+2025-09-24 14:48:18,411 - WARNING -  * Debugger is active!
+2025-09-24 14:48:18,417 - INFO -  * Debugger PIN: 644-088-819
+2025-09-24 14:48:24,580 - INFO - [ATTENDANCE] Request received for email: 'maulanaartanto04@gmail.com'.
+2025-09-24 14:48:24,581 - INFO - [ATTENDANCE] User 'maulanaartanto04@gmail.com' (ID: 2) found.
+2025-09-24 14:48:24,583 - ERROR - [ATTENDANCE] Failed for user 'maulanaartanto04@gmail.com': Invalid signature format. Detail: `ptp` was removed from the ndarray class in NumPy 2.0. Use np.ptp(arr, ...) instead.
+2025-09-24 14:48:24,584 - INFO - 127.0.0.1 - - [24/Sep/2025 14:48:24] "[31m[1mPOST /api/attendance HTTP/1.1[0m" 400 -
+2025-09-24 14:48:26,672 - INFO - 127.0.0.1 - - [24/Sep/2025 14:48:26] "GET /attendance HTTP/1.1" 200 -
+2025-09-24 14:48:41,500 - INFO - [ATTENDANCE] Request received for email: 'maulanaartanto04@gmail.com'.
+2025-09-24 14:48:41,501 - INFO - [ATTENDANCE] User 'maulanaartanto04@gmail.com' (ID: 2) found.
+2025-09-24 14:48:41,502 - ERROR - [ATTENDANCE] Failed for user 'maulanaartanto04@gmail.com': Invalid signature format. Detail: `ptp` was removed from the ndarray class in NumPy 2.0. Use np.ptp(arr, ...) instead.
+2025-09-24 14:48:41,503 - INFO - 127.0.0.1 - - [24/Sep/2025 14:48:41] "[31m[1mPOST /api/attendance HTTP/1.1[0m" 400 -
+2025-09-24 14:49:51,526 - INFO -  * Detected change in 'D:\\KULIAH\\magang\\projek\\signature_attendance_with_admin\\signature_utils.py', reloading
