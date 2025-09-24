@@ -10,3 +10,89 @@
 2025-09-24 14:48:41,502 - ERROR - [ATTENDANCE] Failed for user 'maulanaartanto04@gmail.com': Invalid signature format. Detail: `ptp` was removed from the ndarray class in NumPy 2.0. Use np.ptp(arr, ...) instead.
 2025-09-24 14:48:41,503 - INFO - 127.0.0.1 - - [24/Sep/2025 14:48:41] "[31m[1mPOST /api/attendance HTTP/1.1[0m" 400 -
 2025-09-24 14:49:51,526 - INFO -  * Detected change in 'D:\\KULIAH\\magang\\projek\\signature_attendance_with_admin\\signature_utils.py', reloading
+2025-09-24 14:50:54,567 - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://10.30.50.26:5000
+2025-09-24 14:50:54,568 - INFO - [33mPress CTRL+C to quit[0m
+2025-09-24 14:50:54,569 - INFO -  * Restarting with stat
+2025-09-24 14:50:55,565 - WARNING -  * Debugger is active!
+2025-09-24 14:50:55,570 - INFO -  * Debugger PIN: 644-088-819
+2025-09-24 14:50:55,934 - INFO - 127.0.0.1 - - [24/Sep/2025 14:50:55] "GET /attendance HTTP/1.1" 200 -
+2025-09-24 14:51:02,116 - INFO - [ATTENDANCE] Request received for email: 'maulanaartanto04@gmail.com'.
+2025-09-24 14:51:02,117 - INFO - [ATTENDANCE] User 'maulanaartanto04@gmail.com' (ID: 2) found.
+2025-09-24 14:51:02,214 - INFO - [ATTENDANCE] Successful for user 'maulanaartanto04@gmail.com'. Distance: 0.0670.
+2025-09-24 14:51:02,214 - WARNING - [ATTENDANCE] User 'maulanaartanto04@gmail.com' is late (14:51:02). Reason: 'asdasd'.
+2025-09-24 14:51:02,416 - INFO - 127.0.0.1 - - [24/Sep/2025 14:51:02] "POST /api/attendance HTTP/1.1" 200 -
+2025-09-24 14:51:07,000 - INFO - 127.0.0.1 - - [24/Sep/2025 14:51:07] "GET /register HTTP/1.1" 200 -
+2025-09-24 14:51:07,123 - INFO - 127.0.0.1 - - [24/Sep/2025 14:51:07] "GET /api/departements HTTP/1.1" 200 -
+2025-09-24 14:51:08,152 - INFO - 127.0.0.1 - - [24/Sep/2025 14:51:08] "GET /upload HTTP/1.1" 200 -
+2025-09-24 14:51:23,470 - INFO - [UPLOAD] Request received for email: 'maulanaartanto04@gmail.com'.
+2025-09-24 14:51:23,472 - INFO - [UPLOAD] User 'maulanaartanto04@gmail.com' (ID: 2) found. Proceeding to signature validation.
+2025-09-24 14:51:23,573 - INFO - [UPLOAD] Files ['SK_SHE.docx'] successfully saved for user 'maulanaartanto04@gmail.com'.
+2025-09-24 14:51:23,705 - INFO - [UPLOAD] Successful for user 'maulanaartanto04@gmail.com'. Distance: 0.0463.
+2025-09-24 14:51:23,734 - INFO - 127.0.0.1 - - [24/Sep/2025 14:51:23] "POST /api/upload HTTP/1.1" 200 -
+2025-09-24 14:51:31,878 - INFO - [UPLOAD] Request received for email: 'maulanaartanto04@gmail.com'.
+2025-09-24 14:51:31,881 - INFO - [UPLOAD] User 'maulanaartanto04@gmail.com' (ID: 2) found. Proceeding to signature validation.
+2025-09-24 14:51:31,985 - WARNING - [UPLOAD] Rejected for user 'maulanaartanto04@gmail.com': signature mismatch (distance=0.2691). Logging to DB.
+2025-09-24 14:51:32,159 - INFO - 127.0.0.1 - - [24/Sep/2025 14:51:32] "[31m[1mPOST /api/upload HTTP/1.1[0m" 403 -
+2025-09-24 15:09:21,013 - INFO - 127.0.0.1 - - [24/Sep/2025 15:09:21] "GET /admin HTTP/1.1" 200 -
+2025-09-24 15:09:21,250 - INFO - 127.0.0.1 - - [24/Sep/2025 15:09:21] "GET /api/departements HTTP/1.1" 200 -
+2025-09-24 15:09:21,850 - INFO - 127.0.0.1 - - [24/Sep/2025 15:09:21] "GET /register HTTP/1.1" 200 -
+2025-09-24 15:09:22,005 - INFO - 127.0.0.1 - - [24/Sep/2025 15:09:22] "GET /api/departements HTTP/1.1" 200 -
+2025-09-24 15:09:23,335 - INFO - 127.0.0.1 - - [24/Sep/2025 15:09:23] "GET /attendance HTTP/1.1" 200 -
+2025-09-24 15:09:39,883 - INFO - [ATTENDANCE] Request received for email: 'maulanaartanto04@gmail.com'.
+2025-09-24 15:09:39,884 - INFO - [ATTENDANCE] User 'maulanaartanto04@gmail.com' (ID: 2) found.
+2025-09-24 15:09:39,992 - INFO - [ATTENDANCE] Successful for user 'maulanaartanto04@gmail.com'. Distance: 0.0390.
+2025-09-24 15:09:39,992 - WARNING - [ATTENDANCE] User 'maulanaartanto04@gmail.com' is late (15:09:39). Reason: 'asdasdasd'.
+2025-09-24 15:09:40,166 - INFO - 127.0.0.1 - - [24/Sep/2025 15:09:40] "POST /api/attendance HTTP/1.1" 200 -
+2025-09-24 15:09:57,651 - INFO - 127.0.0.1 - - [24/Sep/2025 15:09:57] "GET /attendance HTTP/1.1" 200 -
+2025-09-24 15:10:01,603 - INFO - [ATTENDANCE] Request received for email: 'maulanaartanto04@gmail.com'.
+2025-09-24 15:10:01,606 - INFO - [ATTENDANCE] User 'maulanaartanto04@gmail.com' (ID: 2) found.
+2025-09-24 15:10:01,722 - WARNING - [ATTENDANCE] Failed for user 'maulanaartanto04@gmail.com': signature mismatch (distance=0.1713).
+2025-09-24 15:10:01,886 - INFO - 127.0.0.1 - - [24/Sep/2025 15:10:01] "POST /api/attendance HTTP/1.1" 200 -
+2025-09-24 15:12:00,649 - INFO -  * Detected change in 'D:\\KULIAH\\magang\\projek\\signature_attendance_with_admin\\signature_utils.py', reloading
+2025-09-24 15:12:00,731 - INFO -  * Restarting with stat
+2025-09-24 15:12:01,852 - WARNING -  * Debugger is active!
+2025-09-24 15:12:01,857 - INFO -  * Debugger PIN: 644-088-819
+2025-09-24 15:12:05,753 - INFO - 127.0.0.1 - - [24/Sep/2025 15:12:05] "GET /attendance HTTP/1.1" 200 -
+2025-09-24 15:12:20,483 - INFO - [ATTENDANCE] Request received for email: 'maulanaartanto04@gmail.com'.
+2025-09-24 15:12:20,485 - INFO - [ATTENDANCE] User 'maulanaartanto04@gmail.com' (ID: 2) found.
+2025-09-24 15:12:20,488 - ERROR - [ATTENDANCE] Failed for user 'maulanaartanto04@gmail.com': Invalid signature format. Detail: object too deep for desired array
+2025-09-24 15:12:20,489 - INFO - 127.0.0.1 - - [24/Sep/2025 15:12:20] "[31m[1mPOST /api/attendance HTTP/1.1[0m" 400 -
+2025-09-24 15:12:23,529 - INFO - 127.0.0.1 - - [24/Sep/2025 15:12:23] "GET /attendance HTTP/1.1" 200 -
+2025-09-24 15:12:30,235 - INFO - [ATTENDANCE] Request received for email: 'maulanaartanto04@gmail.com'.
+2025-09-24 15:12:30,237 - INFO - [ATTENDANCE] User 'maulanaartanto04@gmail.com' (ID: 2) found.
+2025-09-24 15:12:30,237 - ERROR - [ATTENDANCE] Failed for user 'maulanaartanto04@gmail.com': Invalid signature format. Detail: object too deep for desired array
+2025-09-24 15:12:30,238 - INFO - 127.0.0.1 - - [24/Sep/2025 15:12:30] "[31m[1mPOST /api/attendance HTTP/1.1[0m" 400 -
+2025-09-24 15:12:33,261 - INFO - 127.0.0.1 - - [24/Sep/2025 15:12:33] "GET /attendance HTTP/1.1" 200 -
+2025-09-24 15:12:39,675 - INFO - [ATTENDANCE] Request received for email: 'maulanaartanto04@gmail.com'.
+2025-09-24 15:12:39,676 - INFO - [ATTENDANCE] User 'maulanaartanto04@gmail.com' (ID: 2) found.
+2025-09-24 15:12:39,677 - ERROR - [ATTENDANCE] Failed for user 'maulanaartanto04@gmail.com': Invalid signature format. Detail: object too deep for desired array
+2025-09-24 15:12:39,677 - INFO - 127.0.0.1 - - [24/Sep/2025 15:12:39] "[31m[1mPOST /api/attendance HTTP/1.1[0m" 400 -
+2025-09-24 15:12:42,708 - INFO - 127.0.0.1 - - [24/Sep/2025 15:12:42] "GET /attendance HTTP/1.1" 200 -
+2025-09-24 15:12:44,357 - INFO -  * Detected change in 'D:\\KULIAH\\magang\\projek\\signature_attendance_with_admin\\signature_utils.py', reloading
+2025-09-24 15:12:44,446 - INFO -  * Restarting with stat
+2025-09-24 15:12:45,352 - WARNING -  * Debugger is active!
+2025-09-24 15:12:45,357 - INFO -  * Debugger PIN: 644-088-819
+2025-09-24 15:12:52,180 - INFO - [ATTENDANCE] Request received for email: 'maulanaartanto04@gmail.com'.
+2025-09-24 15:12:52,181 - INFO - [ATTENDANCE] User 'maulanaartanto04@gmail.com' (ID: 2) found.
+2025-09-24 15:12:52,288 - INFO - [ATTENDANCE] Successful for user 'maulanaartanto04@gmail.com'. Distance: 0.0741.
+2025-09-24 15:12:52,288 - WARNING - [ATTENDANCE] User 'maulanaartanto04@gmail.com' is late (15:12:52). Reason: 'asdasd'.
+2025-09-24 15:12:52,797 - INFO - 127.0.0.1 - - [24/Sep/2025 15:12:52] "POST /api/attendance HTTP/1.1" 200 -
+2025-09-24 15:12:55,842 - INFO - 127.0.0.1 - - [24/Sep/2025 15:12:55] "GET /attendance HTTP/1.1" 200 -
+2025-09-24 15:13:35,323 - INFO - [ATTENDANCE] Request received for email: 'maulanaartanto04@gmail.com'.
+2025-09-24 15:13:35,326 - INFO - [ATTENDANCE] User 'maulanaartanto04@gmail.com' (ID: 2) found.
+2025-09-24 15:13:35,446 - WARNING - [ATTENDANCE] Failed for user 'maulanaartanto04@gmail.com': signature mismatch (distance=0.1818).
+2025-09-24 15:13:35,877 - INFO - 127.0.0.1 - - [24/Sep/2025 15:13:35] "POST /api/attendance HTTP/1.1" 200 -
+2025-09-24 15:13:38,908 - INFO - 127.0.0.1 - - [24/Sep/2025 15:13:38] "GET /attendance HTTP/1.1" 200 -
+2025-09-24 15:15:18,429 - INFO -  * Detected change in 'D:\\KULIAH\\magang\\projek\\signature_attendance_with_admin\\routes.py', reloading
+2025-09-24 15:15:18,526 - INFO -  * Restarting with stat
+2025-09-24 15:15:19,615 - WARNING -  * Debugger is active!
+2025-09-24 15:15:19,621 - INFO -  * Debugger PIN: 644-088-819
+2025-09-24 15:16:11,747 - INFO -  * Detected change in 'D:\\KULIAH\\magang\\projek\\signature_attendance_with_admin\\routes.py', reloading
+2025-09-24 15:16:11,824 - INFO -  * Restarting with stat
+2025-09-24 15:16:12,851 - WARNING -  * Debugger is active!
+2025-09-24 15:16:12,857 - INFO -  * Debugger PIN: 644-088-819
+2025-09-24 15:16:17,378 - INFO -  * Detected change in 'D:\\KULIAH\\magang\\projek\\signature_attendance_with_admin\\routes.py', reloading
+2025-09-24 15:16:17,503 - INFO -  * Restarting with stat

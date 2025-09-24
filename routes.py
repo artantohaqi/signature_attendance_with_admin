@@ -228,7 +228,8 @@ def api_attendance():
 
     if not email or signature is None:
         logging.warning("[ATTENDANCE] Request failed: missing email or signature.")
-        return jsonify({"ok": False, "error":"email and signature required"}), 400
+        # Mengembalikan `distance: None` untuk konsistensi, meskipun tidak relevan
+        return jsonify({"ok": False, "error": "email and signature required", "distance": None}), 400
 
     db = get_db()
     cur = db.cursor()
@@ -242,7 +243,8 @@ def api_attendance():
         cur.execute("INSERT INTO attendance (user_id,email,timestamp,status,note,distance,reason,departement_id) VALUES (?,?,?,?,?,?,?,?)",
                     (None, email, timestamp, "failed", "user not registered", None, None, None))
         db.commit()
-        return jsonify({"ok": False, "error":"user not registered"}), 404
+        # Mengembalikan `distance: None`
+        return jsonify({"ok": False, "error": "user not registered", "distance": None}), 404
 
     user_id, nama_lengkap, departement_id = row
     logging.info(f"[ATTENDANCE] User '{email}' (ID: {user_id}) found.")
@@ -254,13 +256,16 @@ def api_attendance():
         cur.execute("INSERT INTO attendance (user_id,email,timestamp,status,note,distance,reason,departement_id) VALUES (?,?,?,?,?,?,?,?)",
                     (user_id, email, timestamp, "failed", "no reference signatures", None, None, departement_id))
         db.commit()
-        return jsonify({"ok": False, "error":"no reference signatures"}), 400
+        # Mengembalikan `distance: None`
+        return jsonify({"ok": False, "error": "no reference signatures", "distance": None}), 400
 
     try:
+        # Panggil fungsi preprocess_signature dari signature_utils
         input_pts = preprocess_signature(signature, n=150)
     except Exception as e:
         logging.error(f"[ATTENDANCE] Failed for user '{email}': Invalid signature format. Detail: {str(e)}")
-        return jsonify({"ok": False, "error":"invalid signature format", "detail": str(e)}), 400
+        # Mengembalikan `distance: None`
+        return jsonify({"ok": False, "error": "invalid signature format", "detail": str(e), "distance": None}), 400
     
     distances = []
     for (sig_json_str,) in rows:
@@ -278,7 +283,8 @@ def api_attendance():
         cur.execute("INSERT INTO attendance (user_id,email,timestamp,status,note,distance,reason,departement_id) VALUES (?,?,?,?,?,?,?,?)",
                     (user_id, email, timestamp, "failed", "processing error", None, None, departement_id))
         db.commit()
-        return jsonify({"ok": False, "error":"processing error"}), 500
+        # Mengembalikan `distance: None`
+        return jsonify({"ok": False, "error": "processing error", "distance": None}), 500
 
     min_dist = float(min(distances))
     threshold = 0.10
@@ -287,7 +293,8 @@ def api_attendance():
     
     if is_late and not reason:
         logging.warning(f"[ATTENDANCE] User '{email}' is late ({timestamp_dt.time().strftime('%H:%M:%S')}) but no reason provided.")
-        return jsonify({"ok": False, "need_reason": True, "note": f"late (time {timestamp_dt.time().strftime('%H:%M:%S')})"}), 200
+        # Tambahkan `distance` pada respons `need_reason`
+        return jsonify({"ok": False, "need_reason": True, "note": f"late (time {timestamp_dt.time().strftime('%H:%M:%S')})", "distance": min_dist}), 200
 
     if min_dist <= threshold:
         status = "success"
@@ -306,6 +313,7 @@ def api_attendance():
                 (user_id, email, timestamp, status, note, min_dist, reason if is_late else None, departement_id))
     db.commit()
     
+    # Pastikan 'distance' selalu ada di respons akhir
     return jsonify({"ok": ok, "status": status, "note": note, "name": nama_lengkap, "distance": min_dist, "late": is_late})
 
 # --- Tambahan rute lainnya (tanpa logging, untuk singkatnya) ---
