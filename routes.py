@@ -167,7 +167,13 @@ def home():
 
 @routes.route("/register")
 def register_page():
-    return render_template("register.html")
+    db = get_db()
+    cur = db.cursor()
+    # Ambil semua departemen dari database
+    cur.execute("SELECT id, departement FROM departements ORDER BY departement ASC")
+    departements = cur.fetchall()
+    # Teruskan data departemen ke template
+    return render_template("register.html", departements=departements)
 
 @routes.route("/attendance")
 def attendance_page():
@@ -194,36 +200,48 @@ def absensi_page():
 @routes.route("/api/register", methods=["POST"])
 def api_register():
     data = request.get_json()
-    nama_lengkap = data.get("nama_lengkap","").strip()
-    email = data.get("email","").strip().lower()
+    nama_lengkap = data.get("nama_lengkap", "").strip()
+    email = data.get("email", "").strip().lower()
+    departement_id = data.get("departement_id")  # Ambil departement_id
     signatures = data.get("signatures", [])
+    
     logging.info(f"[REGISTER] Request received for email: '{email}'.")
-    if not nama_lengkap or not email or not signatures or not isinstance(signatures, list):
-        logging.warning("[REGISTER] Failed: missing nama_lengkap, email, or signatures.")
-        return jsonify({"ok": False, "error": "nama_lengkap, email, and signatures[] required (min 1)"}), 400
+    
+    # Tambahkan validasi untuk departement_id
+    if not nama_lengkap or not email or not signatures or not isinstance(signatures, list) or not departement_id:
+        logging.warning("[REGISTER] Failed: missing nama_lengkap, email, signatures, or departement_id.")
+        return jsonify({"ok": False, "error": "nama_lengkap, email, departemen, and signatures[] required (min 3)"}), 400
+    
     db = get_db()
     cur = db.cursor()
+    
     try:
-        cur.execute("INSERT INTO users (nama_lengkap, email, created_at) VALUES (?,?,?)",
-                    (nama_lengkap, email, datetime.utcnow().isoformat()))
+        # Perbarui kueri SQL untuk menyertakan departement_id
+        cur.execute("INSERT INTO users (nama_lengkap, email, departement_id, created_at) VALUES (?, ?, ?, ?)",
+                    (nama_lengkap, email, departement_id, datetime.utcnow().isoformat()))
         user_id = cur.lastrowid
     except sqlite3.IntegrityError:
         logging.error(f"[REGISTER] Failed for '{email}': email already registered.")
         return jsonify({"ok": False, "error": "email already registered"}), 400
+
     for sig in signatures:
         cur.execute("INSERT INTO signatures (user_id, sig_json, created_at) VALUES (?,?,?)",
                     (user_id, json.dumps(sig), datetime.utcnow().isoformat()))
+    
     db.commit()
-    logging.info(f"[REGISTER] User '{email}' (ID: {user_id}) registered successfully.")
+    logging.info(f"[REGISTER] User '{email}' (ID: {user_id}) registered successfully with departement ID: {departement_id}.")
+    
     return jsonify({"ok": True})
 
 @routes.route("/api/attendance", methods=["POST"])
 def api_attendance():
     data = request.get_json()
+    nama_lengkap = data.get("nama_lengkap", "").strip()
     email = data.get("email","").strip().lower()
+    departement_id = data.get("departement_id")
     signature = data.get("signature", None)
     reason = data.get("reason", "").strip()
-
+    
     logging.info(f"[ATTENDANCE] Request received for email: '{email}'.")
 
     if not email or signature is None:
@@ -590,10 +608,24 @@ def admin_panel():
     db = get_db()
     cur = db.cursor()
     
+    # Fetch all admins
     cur.execute("SELECT id, username, password_hash FROM admins")
     admins = cur.fetchall()
     
-    cur.execute("SELECT u.id, u.nama_lengkap, u.email, d.departement FROM users u JOIN departements d ON u.departement_id = d.id ORDER BY u.id DESC")
+    # Fetch users and join with the departements table to get the department name
+    cur.execute("""
+        SELECT 
+            u.id, 
+            u.nama_lengkap, 
+            u.email, 
+            d.departement 
+        FROM 
+            users u 
+        LEFT JOIN 
+            departements d 
+        ON 
+            u.departement_id = d.id
+    """)
     users = cur.fetchall()
     
     return render_template("admin.html", admins=admins, users=users, admin_username=session.get('admin_username'))

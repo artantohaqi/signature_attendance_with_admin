@@ -2,171 +2,208 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Admin Panel</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
     <style>
+        body {
+            -webkit-overflow-scrolling: touch;
+        }
         #signatureCanvas {
             border: 1px solid #e5e7eb;
             border-radius: 0.5rem;
             touch-action: none;
         }
+        .pull-to-refresh-container {
+            height: 100%;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
     </style>
 </head>
-<body class="bg-gray-100 p-6">
-    <div class="flex justify-between items-center mb-6">
-        <h1 class="text-2xl font-bold">Admin Panel</h1>
-        <div>
-            <span class="mr-4">Hi, {{ admin_username }}</span>
-            <a href="{{ url_for('routes.logout') }}" class="bg-red-500 text-white px-4 py-2 rounded">Logout</a>
-        </div>
-    </div>
+<body class="bg-gray-100 p-4 sm:p-6 min-h-screen">
+    <div class="pull-to-refresh-container">
+        <div class="max-w-7xl mx-auto">
+            <header class="bg-white shadow-md rounded-lg p-4 mb-6 flex justify-between items-center">
+                <h1 class="text-3xl font-extrabold text-gray-800">Admin Panel</h1>
+                <div class="flex items-center space-x-4">
+                    <br>
+                    <span class="text-gray-600 font-medium hidden sm:inline">Halo, {{ admin_username }}</span>
+                    <a href="{{ url_for('routes.logout') }}" class="bg-red-600 hover:bg-red-700 text-white font-semibold px-4 py-2 rounded-lg transition duration-150 ease-in-out">
+                        Logout
+                    </a>
+                </div>
+            </header>
 
-    <div id="addAdminContainer" class="bg-white p-6 rounded-lg shadow mb-6 hidden">
-        <h2 class="text-xl font-semibold mb-2">Tambah Admin Baru</h2>
-        <form id="addAdminForm">
-            <div class="mb-4">
-                <label for="new_username" class="block text-gray-700">Username:</label>
-                <input type="text" id="new_username" name="username" class="w-full border rounded-lg p-2" required>
+            <div id="addAdminContainer" class="bg-white p-6 rounded-lg shadow-md mb-6 hidden">
+                <h2 class="text-xl font-semibold mb-2">Tambah Admin Baru</h2>
+                <form id="addAdminForm">
+                    <div class="mb-4">
+                        <label for="new_username" class="block text-gray-700">Username:</label>
+                        <input type="text" id="new_username" name="username" class="w-full border rounded-lg p-2" required>
+                    </div>
+                    <div class="mb-4">
+                        <label for="new_password" class="block text-gray-700">Password:</label>
+                        <input type="password" id="new_password" name="password" class="w-full border rounded-lg p-2" required>
+                    </div>
+                    <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">Tambah Admin</button>
+                    <button type="button" onclick="closeAddAdminForm()" class="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600">Batal</button>
+                    <div id="add-admin-msg" class="mt-2 text-center"></div>
+                </form>
             </div>
-            <div class="mb-4">
-                <label for="new_password" class="block text-gray-700">Password:</label>
-                <input type="password" id="new_password" name="password" class="w-full border rounded-lg p-2" required>
+            
+            <div class="mb-6 flex flex-wrap gap-2">
+                <a href="{{ url_for('routes.departement_page') }}" class="bg-blue-500 text-white px-3 py-1.5 rounded-lg text-sm hover:bg-blue-600">Departemen</a>
+                <a href="{{ url_for('routes.absensi_page') }}" class="bg-green-500 text-white px-3 py-1.5 rounded-lg text-sm hover:bg-green-600">History Absensi</a>
             </div>
-            <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">Tambah Admin</button>
-            <button type="button" onclick="closeAddAdminForm()" class="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600">Batal</button>
-            <div id="add-admin-msg" class="mt-2 text-center"></div>
-        </form>
-    </div>
-    
-    <div class="mb-6 flex space-x-2">
-        <a href="{{ url_for('routes.departement_page') }}" class="bg-blue-500 text-white px-3 py-1.5 rounded text-sm">Manajemen Departemen</a>
-        <a href="{{ url_for('routes.absensi_page') }}" class="bg-green-500 text-white px-3 py-1.5 rounded text-sm">Lihat Absensi</a>
-        <a href="{{ url_for('routes.register_page') }}" class="bg-indigo-500 text-white px-3 py-1.5 rounded text-sm">Registrasi User Baru</a>
-    </div>
 
-    <h2 class="text-xl font-semibold mb-2 flex justify-between items-center">
-        Admins
-        <button id="showAddAdminButton" class="bg-blue-500 hover:bg-blue-600 text-white rounded-full p-1 w-8 h-8 flex items-center justify-center shadow-lg">
-            <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-            </svg>
-        </button>
-    </h2>
-    <table class="w-full border mb-6">
-        <tr class="bg-gray-200">
-            <th class="p-2">Username</th>
-            <th class="p-2">Aksi</th>
-        </tr>
-        {% for a in admins %}
-        <tr id="admin-{{ a[0] }}">
-            <td class="border p-2">{{ a[1] }}</td>
-            <td class="border p-2 text-center space-x-1">
-                <button onclick="openEditAdminModal({{ a[0] }}, '{{ a[1] }}')" class="bg-yellow-500 text-white px-2 py-0.5 rounded text-xs">Edit</button>
-                <button onclick="deleteAdmin({{ a[0] }})" class="bg-red-500 text-white px-2 py-0.5 rounded text-xs">Hapus</button>
-            </td>
-        </tr>
-        {% endfor %}
-    </table>
-    
-    <h2 class="text-xl font-semibold mb-2">Users</h2>
-    <table class="w-full border mb-6">
-        <tr class="bg-gray-200">
-            <th class="p-2">Nama Lengkap</th>
-            <th class="p-2">Email</th>
-            <th class="p-2">Departemen</th>
-            <th class="p-2">Tanda Tangan</th>
-            <th class="p-2">Aksi</th>
-        </tr>
-        {% for u in users %}
-        <tr id="user-{{ u[0] }}">
-            <td class="border p-2">{{ u[1] }}</td>
-            <td class="border p-2">{{ u[2] }}</td>
-            <td class="border p-2">{{ u[3] }}</td>
-            <td class="border p-2 text-center">
-                <button onclick="openSignatureModal({{ u[0] }})" class="bg-purple-500 text-white px-2 py-0.5 rounded text-xs">Lihat & Edit</button>
-            </td>
-            <td class="border p-2 text-center space-x-1">
-                <button onclick="openEditUserModal({{ u[0] }}, '{{ u[1] }}', '{{ u[2] }}', '{{ u[3] }}')" class="bg-yellow-500 text-white px-2 py-0.5 rounded text-xs">Edit</button>
-                <button onclick="deleteUser({{ u[0] }})" class="bg-red-500 text-white px-2 py-0.5 rounded text-xs">Hapus</button>
-            </td>
-        </tr>
-        {% endfor %}
-    </table>
-
-    <div id="editAdminModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full">
-        <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
-            <h3 class="text-xl font-bold mb-4">Edit Admin</h3>
-            <form id="editAdminForm">
-                <input type="hidden" id="edit-admin-id">
-                <div class="mb-4">
-                    <label for="edit-username" class="block text-gray-700">Username:</label>
-                    <input type="text" id="edit-username" name="username" class="w-full border rounded-lg p-2" required>
-                </div>
-                <div class="mb-4">
-                    <label for="edit-password" class="block text-gray-700">Password (Kosongkan jika tidak ingin diubah):</label>
-                    <input type="password" id="edit-password" name="password" class="w-full border rounded-lg p-2">
-                </div>
-                <div class="flex justify-end space-x-2">
-                    <button type="button" onclick="closeEditAdminModal()" class="bg-gray-500 text-white px-4 py-2 rounded-lg">Batal</button>
-                    <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-lg">Simpan</button>
-                </div>
-            </form>
-            <div id="edit-admin-msg" class="mt-2 text-center"></div>
-        </div>
-    </div>
-
-    <div id="editUserModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full">
-        <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
-            <h3 class="text-xl font-bold mb-4">Edit User</h3>
-            <form id="editUserForm">
-                <input type="hidden" id="edit-user-id">
-                <div class="mb-4">
-                    <label for="edit-user-fullname" class="block text-gray-700">Nama Lengkap:</label>
-                    <input type="text" id="edit-user-fullname" name="fullname" class="w-full border rounded-lg p-2" required>
-                </div>
-                <div class="mb-4">
-                    <label for="edit-user-email" class="block text-gray-700">Email:</label>
-                    <input type="email" id="edit-user-email" name="email" class="w-full border rounded-lg p-2" required>
-                </div>
-                <div class="mb-4">
-                    <label for="edit-user-departement" class="block text-gray-700">Departemen:</label>
-                    <select id="edit-user-departement" name="departement_id" class="w-full border rounded-lg p-2" required>
-                    </select>
-                </div>
-                <div class="flex justify-end space-x-2">
-                    <button type="button" onclick="closeEditUserModal()" class="bg-gray-500 text-white px-4 py-2 rounded-lg">Batal</button>
-                    <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-lg">Simpan</button>
-                </div>
-            </form>
-            <div id="edit-user-msg" class="mt-2 text-center"></div>
-        </div>
-    </div>
-
-    <div id="signatureModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full">
-        <div class="relative top-20 mx-auto p-5 border w-full max-w-2xl shadow-lg rounded-md bg-white">
-            <div class="flex justify-between items-center mb-4">
-                <h3 class="text-xl font-bold">Edit Tanda Tangan User: <span id="userSignatureName" class="text-blue-600"></span></h3>
-                <button onclick="closeSignatureModal()" class="text-gray-500 hover:text-gray-700">&times;</button>
+            <h2 class="text-xl font-semibold mb-2 flex items-center">
+                Admins
+                <button id="showAddAdminButton" class="ml-2 bg-blue-500 hover:bg-blue-600 text-white rounded-full p-1 w-8 h-8 flex items-center justify-center shadow-lg">
+                    <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                    </svg>
+                </button>
+            </h2>
+            <div class="overflow-x-auto rounded-lg shadow mb-6">
+                <table class="w-full text-left border-collapse table-auto">
+                    <thead>
+                        <tr class="bg-gray-200">
+                            <th class="p-4 border-b">Username</th>
+                            <th class="p-4 border-b w-32">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for a in admins %}
+                        <tr id="admin-{{ a[0] }}" class="bg-white hover:bg-gray-50">
+                            <td class="p-4 border-b">{{ a[1] }}</td>
+                            <td class="p-4 border-b text-center whitespace-nowrap">
+                                <button onclick="openEditAdminModal({{ a[0] }}, '{{ a[1] }}')" class="bg-yellow-500 text-white px-2 py-0.5 rounded-lg text-xs">Edit</button>
+                                <button onclick="deleteAdmin({{ a[0] }})" class="bg-red-500 text-white px-2 py-0.5 rounded-lg text-xs">Hapus</button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
             </div>
-            <div id="signaturesList" class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                <!-- Preview tanda tangan lama -->
+            
+            <h2 class="text-xl font-semibold mb-2 flex items-center">
+                Users
+                <a href="{{ url_for('routes.register_page') }}" class="ml-2" >
+                    <button id="showAddAdminButton" 
+                            class="bg-blue-500 hover:bg-blue-600 text-white rounded-full p-1 w-8 h-8 flex items-center justify-center shadow-lg">
+                        <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" 
+                            viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" 
+                                d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                        </svg>
+                    </button>
+                </a>
+            </h2>
+            <div class="overflow-x-auto rounded-lg shadow mb-6">
+                <table class="w-full text-left border-collapse table-auto">
+                    <thead>
+                        <tr class="bg-gray-200">
+                            <th class="p-4 border-b">Nama</th>
+                            <th class="p-4 border-b">Email</th>
+                            <th class="p-4 border-b">Departemen</th>
+                            <th class="p-4 border-b text-center">TTD</th>
+                            <th class="p-4 border-b text-center w-32">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for u in users %}
+                        <tr id="user-{{ u[0] }}" class="bg-white hover:bg-gray-50">
+                            <td class="p-4 border-b">{{ u[1] }}</td>
+                            <td class="p-4 border-b">{{ u[2] }}</td>
+                            <td class="p-4 border-b">{{ u[3] }}</td>
+                            <td class="p-4 border-b text-center">
+                                <button onclick="openSignatureModal({{ u[0] }})" class="bg-purple-500 text-white px-2 py-0.5 rounded-lg text-xs hover:bg-purple-600">Lihat & Edit</button>
+                            </td>
+                            <td class="p-4 border-b text-center whitespace-nowrap">
+                                <button onclick="openEditUserModal({{ u[0] }}, '{{ u[1] }}', '{{ u[2] }}', '{{ u[3] }}')" class="bg-yellow-500 text-white px-2 py-0.5 rounded-lg text-xs hover:bg-yellow-600">Edit</button>
+                                <button onclick="deleteUser({{ u[0] }})" class="bg-red-500 text-white px-2 py-0.5 rounded-lg text-xs hover:bg-red-600">Hapus</button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
             </div>
-            <div class="border-t pt-4">
-                <h4 class="font-bold mb-2">Tambah 3 Tanda Tangan Baru (akan menggantikan yang lama):</h4>
-                <div class="border rounded mb-2 bg-gray-50">
-                    <canvas id="signatureCanvas" width="400" height="200"></canvas>
+            
+            <div id="editAdminModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full">
+                <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+                    <h3 class="text-xl font-bold mb-4">Edit Admin</h3>
+                    <form id="editAdminForm">
+                        <input type="hidden" id="edit-admin-id">
+                        <div class="mb-4">
+                            <label for="edit-username" class="block text-gray-700">Username:</label>
+                            <input type="text" id="edit-username" name="username" class="w-full border rounded-lg p-2" required>
+                        </div>
+                        <div class="mb-4">
+                            <label for="edit-password" class="block text-gray-700">Password (Kosongkan jika tidak ingin diubah):</label>
+                            <input type="password" id="edit-password" name="password" class="w-full border rounded-lg p-2">
+                        </div>
+                        <div class="flex justify-end space-x-2">
+                            <button type="button" onclick="closeEditAdminModal()" class="bg-gray-500 text-white px-4 py-2 rounded-lg">Batal</button>
+                            <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-lg">Simpan</button>
+                        </div>
+                    </form>
+                    <div id="edit-admin-msg" class="mt-2 text-center"></div>
                 </div>
-                <div class="flex gap-2 mb-3">
-                    <button type="button" id="clearSignatureBtn" class="px-3 py-1 bg-gray-200 rounded">Clear</button>
-                    <button type="button" id="captureSignatureBtn" class="px-3 py-1 bg-indigo-600 text-white rounded">Capture Sample</button>
+            </div>
+
+            <div id="editUserModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full">
+                <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+                    <h3 class="text-xl font-bold mb-4">Edit User</h3>
+                    <form id="editUserForm">
+                        <input type="hidden" id="edit-user-id">
+                        <div class="mb-4">
+                            <label for="edit-user-fullname" class="block text-gray-700">Nama Lengkap:</label>
+                            <input type="text" id="edit-user-fullname" name="fullname" class="w-full border rounded-lg p-2" required>
+                        </div>
+                        <div class="mb-4">
+                            <label for="edit-user-email" class="block text-gray-700">Email:</label>
+                            <input type="email" id="edit-user-email" name="email" class="w-full border rounded-lg p-2" required>
+                        </div>
+                        <div class="mb-4">
+                            <label for="edit-user-departement" class="block text-gray-700">Departemen:</label>
+                            <select id="edit-user-departement" name="departement_id" class="w-full border rounded-lg p-2" required></select>
+                        </div>
+                        <div class="flex justify-end space-x-2">
+                            <button type="button" onclick="closeEditUserModal()" class="bg-gray-500 text-white px-4 py-2 rounded-lg">Batal</button>
+                            <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-lg">Simpan</button>
+                        </div>
+                    </form>
+                    <div id="edit-user-msg" class="mt-2 text-center"></div>
                 </div>
-                <div class="text-sm mb-2">Samples captured: <span id="signatureCount">0</span>/3</div>
-                <div class="flex justify-between mt-2">
-                    <button id="cancelSignatureBtn" class="bg-gray-500 text-white px-4 py-2 rounded-lg">Batal</button>
-                    <button id="updateSignatureBtn" class="bg-green-500 text-white px-4 py-2 rounded-lg" disabled>Update Tanda Tangan</button>
+            </div>
+
+            <div id="signatureModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full">
+                <div class="relative top-20 mx-auto p-5 border w-full max-w-2xl shadow-lg rounded-md bg-white">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-xl font-bold">Edit Tanda Tangan User: <span id="userSignatureName" class="text-blue-600"></span></h3>
+                        <button onclick="closeSignatureModal()" class="text-gray-500 hover:text-gray-700">&times;</button>
+                    </div>
+                    <div id="signaturesList" class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        </div>
+                    <div class="border-t pt-4">
+                        <h4 class="font-bold mb-2">Tambah 3 Tanda Tangan Baru (akan menggantikan yang lama):</h4>
+                        <div class="border rounded mb-2 bg-gray-50">
+                            <canvas id="signatureCanvas" width="400" height="200"></canvas>
+                        </div>
+                        <div class="flex gap-2 mb-3">
+                            <button type="button" id="clearSignatureBtn" class="px-3 py-1 bg-gray-200 rounded">Clear</button>
+                            <button type="button" id="captureSignatureBtn" class="px-3 py-1 bg-indigo-600 text-white rounded">Capture Sample</button>
+                        </div>
+                        <div class="text-sm mb-2">Samples captured: <span id="signatureCount">0</span>/3</div>
+                        <div class="flex justify-between mt-2">
+                            <button id="cancelSignatureBtn" class="bg-gray-500 text-white px-4 py-2 rounded-lg">Batal</button>
+                            <button id="updateSignatureBtn" class="bg-green-500 text-white px-4 py-2 rounded-lg" disabled>Update Tanda Tangan</button>
+                        </div>
+                        <div id="signature-msg" class="mt-2 text-center"></div>
+                    </div>
                 </div>
-                <div id="signature-msg" class="mt-2 text-center"></div>
             </div>
         </div>
     </div>
@@ -191,6 +228,31 @@
         const signatureCountSpan = document.getElementById('signatureCount');
         let currentUserId = null;
         let signatureSamples = [];
+
+        // Fungsionalitas Pull-to-Refresh
+        let startY = 0;
+        let isRefreshing = false;
+        const container = document.querySelector('.pull-to-refresh-container');
+
+        container.addEventListener('touchstart', (e) => {
+            startY = e.touches[0].pageY;
+        });
+
+        container.addEventListener('touchmove', (e) => {
+            let deltaY = e.touches[0].pageY - startY;
+            if (deltaY > 100 && container.scrollTop === 0 && !isRefreshing) {
+                isRefreshing = true;
+                container.style.transform = `translateY(${deltaY}px)`;
+            }
+        });
+
+        container.addEventListener('touchend', () => {
+            if (isRefreshing) {
+                isRefreshing = false;
+                container.style.transform = '';
+                location.reload();
+            }
+        });
 
         // Event listeners untuk SignaturePad
         clearSignatureBtn.addEventListener('click', () => {
@@ -278,7 +340,7 @@
                     drawSignatureOnCanvas(sig.sig_json, sigCtx);
                     
                     const deleteBtn = document.createElement('button');
-                    deleteBtn.className = 'bg-red-500 text-white text-xs px-2 py-1 rounded mt-2 hover:bg-red-600';
+                    deleteBtn.className = 'bg-red-500 text-white text-xs px-2 py-1 rounded-lg mt-2 hover:bg-red-600';
                     deleteBtn.innerText = 'Hapus Tanda Tangan';
                     deleteBtn.onclick = () => deleteSignature(sig.id);
                     
@@ -300,7 +362,7 @@
             ctx.strokeStyle = '#000';
             
             sigData.forEach(stroke => {
-                if (stroke.length > 0 && stroke[0].length === 2) {
+                if (stroke.length > 0 && Array.isArray(stroke[0]) && stroke[0].length === 2) {
                     ctx.beginPath();
                     ctx.moveTo(stroke[0][0] * ctx.canvas.width, stroke[0][1] * ctx.canvas.height);
                     for (let i = 1; i < stroke.length; i++) {
